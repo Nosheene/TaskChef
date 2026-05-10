@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: taskchef_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: taskchef
+      MYSQL_USER: taskchef_user
+      MYSQL_PASSWORD: taskchef_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mongo:
+    image: mongo:7
+    container_name: taskchef_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: taskchef_backend
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - mongo
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      JWT_SECRET: super-secret-taskchef-change-me
+      CORS_ORIGIN: http://localhost:3000,http://127.0.0.1:3000
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: taskchef_user
+      MYSQL_PASSWORD: taskchef_pass
+      MYSQL_DATABASE: taskchef
+      MONGO_URI: mongodb://mongo:27017/taskchef
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+volumes:
+  mysql_data:
+  mongo_data:
