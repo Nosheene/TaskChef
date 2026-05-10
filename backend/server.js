@@ -93,7 +93,7 @@ function authenticateToken(req, res, next) {
   try {
     req.user = jwt.verify(token, jwtSecret);
     return next();
-  } catch (_error) {
+  } catch (error) {
     return res.status(401).json({ message: "Token invalide ou expire." });
   }
 }
@@ -115,7 +115,7 @@ const authLimiter = rateLimit({
   message: { message: "Trop de tentatives. Reessayez plus tard." },
 });
 
-app.get("/", (_req, res) => {
+app.get("/", (req, res) => {
   res.json({ message: "API TaskChef fonctionne !" });
 });
 
@@ -129,7 +129,7 @@ app.get("/health", async (_req, res) => {
   try {
     await mysqlPool.query("SELECT 1");
     health.mysql = "ok";
-  } catch (_error) {
+  } catch (error) {
     health.mysql = "down";
   }
 
@@ -165,7 +165,7 @@ app.post("/auth/register", authLimiter, async (req, res) => {
     );
 
     return res.status(201).json({ message: "Compte cree.", userId: result.insertId });
-  } catch (_error) {
+  } catch (error) {
     return res.status(500).json({ message: "Erreur lors de l'inscription." });
   }
 });
@@ -192,16 +192,18 @@ app.post("/auth/login", authLimiter, async (req, res) => {
       return res.status(401).json({ message: "Identifiants invalides." });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, jwtSecret, {
-      expiresIn: "8h",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      jwtSecret,
+      { expiresIn: "8h" }
+    );
 
     return res.json({
       message: "Connexion reussie.",
       token,
       user: { id: user.id, nom: user.nom, email: user.email, role: user.role },
     });
-  } catch (_error) {
+  } catch (error) {
     return res.status(500).json({ message: "Erreur lors de la connexion." });
   }
 });
@@ -214,7 +216,7 @@ app.get("/tasks", async (_req, res) => {
        ORDER BY date_creation DESC`
     );
     return res.json(rows);
-  } catch (_error) {
+  } catch (error) {
     return res.status(500).json({ message: "Erreur lors de la lecture des taches." });
   }
 });
@@ -223,7 +225,7 @@ app.get("/activity-logs", authenticateToken, async (_req, res) => {
   try {
     const logs = await ActivityLog.find().sort({ timestamp: -1 }).limit(100).lean();
     return res.json(logs);
-  } catch (_error) {
+  } catch (error) {
     return res.status(500).json({ message: "Erreur lors de la lecture des logs." });
   }
 });
@@ -239,7 +241,13 @@ app.post("/tasks", authenticateToken, async (req, res) => {
     const [result] = await mysqlPool.execute(
       `INSERT INTO tasks (titre, description, statut, priorite, date_limite)
        VALUES (?, ?, ?, ?, ?)`,
-      [titre.trim(), description || null, statut || "a_faire", priorite || "moyenne", date_limite || null]
+      [
+        titre.trim(),
+        description || null,
+        statut || "a_faire",
+        priorite || "moyenne",
+        date_limite || null,
+      ]
     );
 
     await writeActivityLog({
@@ -253,7 +261,7 @@ app.post("/tasks", authenticateToken, async (req, res) => {
       message: "Tache creee.",
       id: result.insertId,
     });
-  } catch (_error) {
+  } catch (error) {
     return res.status(500).json({ message: "Erreur lors de la creation de la tache." });
   }
 });
@@ -265,6 +273,7 @@ app.put("/tasks/:id", authenticateToken, async (req, res) => {
   if (!Number.isInteger(taskId) || taskId <= 0) {
     return res.status(400).json({ message: "ID de tache invalide." });
   }
+
   if (!titre || titre.trim().length < 3) {
     return res.status(400).json({ message: "Le titre est obligatoire (min 3 caracteres)." });
   }
@@ -274,7 +283,14 @@ app.put("/tasks/:id", authenticateToken, async (req, res) => {
       `UPDATE tasks
        SET titre = ?, description = ?, statut = ?, priorite = ?, date_limite = ?
        WHERE id = ?`,
-      [titre.trim(), description || null, statut || "a_faire", priorite || "moyenne", date_limite || null, taskId]
+      [
+        titre.trim(),
+        description || null,
+        statut || "a_faire",
+        priorite || "moyenne",
+        date_limite || null,
+        taskId,
+      ]
     );
 
     if (result.affectedRows === 0) {
@@ -289,7 +305,7 @@ app.put("/tasks/:id", authenticateToken, async (req, res) => {
     });
 
     return res.json({ message: "Tache mise a jour." });
-  } catch (_error) {
+  } catch (error) {
     return res.status(500).json({ message: "Erreur lors de la mise a jour." });
   }
 });
@@ -315,7 +331,7 @@ app.delete("/tasks/:id", authenticateToken, requireRole("admin"), async (req, re
     });
 
     return res.json({ message: "Tache supprimee." });
-  } catch (_error) {
+  } catch (error) {
     return res.status(500).json({ message: "Erreur lors de la suppression." });
   }
 });
