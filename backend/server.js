@@ -10,6 +10,9 @@ require("dotenv").config();
 
 const app = express();
 
+// Docker / reverse-proxy : évite les erreurs express-rate-limit si X-Forwarded-* est présent
+app.set("trust proxy", 1);
+
 const isProduction = process.env.NODE_ENV === "production";
 const jwtSecret = process.env.JWT_SECRET || "change-me-in-production";
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000,http://127.0.0.1:3000")
@@ -36,6 +39,7 @@ app.use(
     max: 200,
     standardHeaders: true,
     legacyHeaders: false,
+    validate: false,
   })
 );
 
@@ -51,10 +55,43 @@ const mysqlPool = mysql.createPool({
   connectionLimit: 10,
 });
 
-async function connectMongo() {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForMysql() {
+  const max = Number(process.env.MYSQL_RETRY_ATTEMPTS || 30);
+  for (let i = 0; i < max; i++) {
+    try {
+      await mysqlPool.query("SELECT 1");
+      console.log("MySQL connecte");
+      return;
+    } catch (error) {
+      console.error(`MySQL pas pret (${i + 1}/${max}):`, error.message);
+      await sleep(2000);
+    }
+  }
+  throw new Error("MySQL indisponible apres les tentatives.");
+}
+
+async function waitForMongo() {
+  const max = Number(process.env.MONGO_RETRY_ATTEMPTS || 30);
   const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/taskchef";
-  await mongoose.connect(mongoUri);
-  console.log("MongoDB connecte");
+  if (mongoose.connection.readyState === 1) {
+    console.log("MongoDB connecte");
+    return;
+  }
+  for (let i = 0; i < max; i++) {
+    try {
+      await mongoose.connect(mongoUri);
+      console.log("MongoDB connecte");
+      return;
+    } catch (error) {
+      console.error(`Mongo pas pret (${i + 1}/${max}):`, error.message);
+      await sleep(2000);
+    }
+  }
+  throw new Error("Mongo indisponible apres les tentatives.");
 }
 
 const activityLogSchema = new mongoose.Schema(
@@ -67,7 +104,7 @@ const activityLogSchema = new mongoose.Schema(
   { timestamps: { createdAt: "timestamp", updatedAt: false } }
 );
 
-const ActivityLog = mongoose.model("ActivityLog", activityLogSchema);
+const ActivityLog = mongoose.models.ActivityLog || mongoose.model("ActivityLog", activityLogSchema);
 
 async function writeActivityLog({ taskId, action, userId, details = "" }) {
   try {
@@ -112,6 +149,7 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: { message: "Trop de tentatives. Reessayez plus tard." },
 });
 
@@ -340,11 +378,9 @@ const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
-    await connectMongo();
-    await mysqlPool.query("SELECT 1");
-    console.log("MySQL connecte");
+    await Promise.all([waitForMongo(), waitForMysql()]);
 
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`Serveur lance sur le port ${PORT}`);
     });
   } catch (error) {

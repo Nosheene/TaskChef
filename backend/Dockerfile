@@ -9,4 +9,6 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Le montage compose `./backend:/app` + volume anonyme `/app/node_modules` peut garder d’anciens modules :
+# un npm install au démarrage aligne node_modules sur package.json / package-lock.
+CMD ["sh", "-c", "npm install && npm start"]
