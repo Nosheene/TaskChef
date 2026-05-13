@@ -158,7 +158,6 @@ textarea:focus-visible {
 }
 
 .auth-page {
-  min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 1rem;
@@ -274,6 +273,50 @@ a.task-card:hover {
 .list-group-item {
   border-color: var(--color-border);
   color: var(--color-text);
+}
+
+.site-footer {
+  margin-top: auto;
+  padding: 0.875rem 1rem;
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-family: var(--font-meta);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+}
+
+.site-footer p {
+  margin-bottom: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+body[data-page="login"],
+body[data-page="register"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+body[data-page="login"] .auth-page,
+body[data-page="register"] .auth-page {
+  flex: 1;
+}
+
+body[data-page="dashboard"],
+body[data-page="create-task"],
+body[data-page="task-detail"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+body[data-page="dashboard"] > main,
+body[data-page="create-task"] > main,
+body[data-page="task-detail"] > main {
+  flex: 1 0 auto;
 }
 
 .alert-success {
