@@ -96,18 +96,20 @@ function taskStatusLabel(status) {
 }
 
 function createTaskCard(task) {
-  const article = document.createElement("article");
-  article.className = "card task-card shadow-sm";
+  const link = document.createElement("a");
+  link.href = `task-detail.html?id=${encodeURIComponent(task.id)}`;
+  link.className = "card task-card shadow-sm text-decoration-none text-reset h-100 d-flex flex-column";
+  link.setAttribute("aria-label", `Ouvrir la tâche : ${task.titre}`);
 
   const body = document.createElement("div");
-  body.className = "card-body";
+  body.className = "card-body d-flex flex-column flex-grow-1";
 
   const title = document.createElement("h3");
   title.className = "h5";
   title.textContent = task.titre;
 
   const description = document.createElement("p");
-  description.className = "text-muted";
+  description.className = "text-muted flex-grow-1";
   description.textContent = task.description || "Aucune description";
 
   const status = document.createElement("span");
@@ -125,14 +127,14 @@ function createTaskCard(task) {
     : "Pas de date limite";
 
   body.append(title, description, status, priority, deadline);
-  article.appendChild(body);
-  return article;
+  link.appendChild(body);
+  return link;
 }
 
 async function loadTasks() {
   const tasksList = document.getElementById("tasksList");
   const statusFilter = document.getElementById("statusFilter");
-  tasksList.textContent = "Chargement...";
+  tasksList.textContent = "Chargement des tâches…";
 
   try {
     const tasks = await apiFetch("/tasks");
@@ -149,6 +151,12 @@ async function loadTasks() {
     filteredTasks.forEach((task) => tasksList.appendChild(createTaskCard(task)));
   } catch (error) {
     setAlert(error.message);
+    tasksList.innerHTML = "";
+    const msg = document.createElement("p");
+    msg.className = "text-danger mb-0";
+    msg.textContent =
+      "Impossible de charger les tâches. Vérifiez que le backend tourne (Docker) sur http://localhost:3000 puis rechargez la page.";
+    tasksList.appendChild(msg);
   }
 }
 
@@ -191,6 +199,95 @@ async function initDashboard() {
   await loadActivityLogs();
 }
 
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("taskchef_user") || "null");
+  } catch (_e) {
+    return null;
+  }
+}
+
+async function initTaskDetail() {
+  requireAuth();
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  if (!id) {
+    setAlert("Identifiant de tâche manquant.");
+    return;
+  }
+
+  const form = document.getElementById("taskDetailForm");
+  const deleteBtn = document.getElementById("deleteTaskBtn");
+  const user = getStoredUser();
+  const isAdmin = user && user.role === "admin";
+
+  if (deleteBtn) {
+    if (isAdmin) {
+      deleteBtn.classList.remove("d-none");
+    } else {
+      deleteBtn.classList.add("d-none");
+    }
+  }
+
+  async function loadTask() {
+    try {
+      const task = await apiFetch(`/tasks/${id}`);
+      document.getElementById("title").value = task.titre;
+      document.getElementById("description").value = task.description || "";
+      document.getElementById("status").value = task.statut;
+      document.getElementById("priority").value = task.priorite;
+      if (task.date_limite) {
+        const d = new Date(task.date_limite);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        document.getElementById("deadline").value = `${y}-${m}-${day}`;
+      } else {
+        document.getElementById("deadline").value = "";
+      }
+    } catch (error) {
+      setAlert(error.message);
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await apiFetch(`/tasks/${id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({
+          titre: document.getElementById("title").value,
+          description: document.getElementById("description").value,
+          statut: document.getElementById("status").value,
+          priorite: document.getElementById("priority").value,
+          date_limite: document.getElementById("deadline").value || null,
+        }),
+      });
+      setAlert("Tâche mise à jour.", "success");
+    } catch (error) {
+      setAlert(error.message);
+    }
+  });
+
+  if (deleteBtn && isAdmin) {
+    deleteBtn.addEventListener("click", async () => {
+      if (!window.confirm("Supprimer cette tâche définitivement ?")) return;
+      try {
+        await apiFetch(`/tasks/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
+        window.location.href = "index.html";
+      } catch (error) {
+        setAlert(error.message);
+      }
+    });
+  }
+
+  await loadTask();
+}
+
 async function initCreateTask() {
   requireAuth();
   const form = document.getElementById("taskForm");
@@ -224,4 +321,5 @@ document.addEventListener("DOMContentLoaded", () => {
   if (page === "register") initRegister();
   if (page === "dashboard") initDashboard();
   if (page === "create-task") initCreateTask();
+  if (page === "task-detail") initTaskDetail();
 });

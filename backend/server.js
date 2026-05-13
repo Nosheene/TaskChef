@@ -259,6 +259,28 @@ app.get("/tasks", async (_req, res) => {
   }
 });
 
+app.get("/tasks/:id", async (req, res) => {
+  const taskId = Number(req.params.id);
+  if (!Number.isInteger(taskId) || taskId <= 0) {
+    return res.status(400).json({ message: "ID de tache invalide." });
+  }
+  try {
+    const [rows] = await mysqlPool.execute(
+      `SELECT id, titre, description, statut, priorite, date_limite, date_creation
+       FROM tasks
+       WHERE id = ?
+       LIMIT 1`,
+      [taskId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Tache introuvable." });
+    }
+    return res.json(rows[0]);
+  } catch (error) {
+    return res.status(500).json({ message: "Erreur lors de la lecture de la tache." });
+  }
+});
+
 app.get("/activity-logs", authenticateToken, async (_req, res) => {
   try {
     const logs = await ActivityLog.find().sort({ timestamp: -1 }).limit(100).lean();

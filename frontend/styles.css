@@ -244,9 +244,10 @@ textarea:focus-visible {
   transition:
     transform 160ms ease,
     box-shadow 160ms ease;
+  cursor: pointer;
 }
 
-.task-card:hover {
+a.task-card:hover {
   transform: translateY(-3px);
 }
 
