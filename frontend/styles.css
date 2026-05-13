@@ -219,14 +219,16 @@ textarea:focus-visible {
   border-color: var(--color-primary-dark);
 }
 
+/* Anciens boutons outline secondaires : même rendu que le CTA primaire (charte TaskChef) */
 .btn-outline-secondary {
+  background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: #ffffff;
 }
 
 .btn-outline-secondary:hover {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
   color: #ffffff;
 }
 
