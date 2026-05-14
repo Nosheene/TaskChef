@@ -96,12 +96,43 @@ h4,
   line-height: var(--lh-h4);
 }
 
-.navbar-brand {
-  color: var(--color-text);
+/* Lien marque (pas la classe Bootstrap .navbar-brand) pour éviter tout pseudo-élément résiduel en cache */
+.brand-link {
+  color: var(--color-text) !important;
   font-family: var(--font-title);
   font-weight: 700;
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
+  text-decoration: none;
+  white-space: nowrap;
+  padding-top: 0.3125rem;
+  padding-bottom: 0.3125rem;
+  margin-right: 1rem;
+}
+
+.brand-link:hover {
+  color: var(--color-text) !important;
+  opacity: 0.92;
+}
+
+.brand-link::before,
+.brand-link::after {
+  content: none !important;
+  display: none !important;
+}
+
+.brand-logo {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+}
+
+.auth-brand-logo {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
 }
 
 a {
@@ -141,16 +172,6 @@ textarea:focus-visible {
 .navbar {
   background: rgb(255 255 255 / 92%) !important;
   backdrop-filter: blur(12px);
-}
-
-.navbar-brand::before {
-  content: "";
-  display: inline-block;
-  width: 0.85rem;
-  height: 0.85rem;
-  margin-right: 0.5rem;
-  background: var(--color-accent);
-  border-radius: 999px;
 }
 
 .text-muted {
