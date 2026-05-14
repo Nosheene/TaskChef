@@ -45,7 +45,8 @@ TaskChef/
 ├── backend/           # API Express (Dockerfile, server.js)
 ├── frontend/          # Pages statiques (HTML, CSS, JS)
 ├── database/sql/      # Scripts MySQL (schéma, seed)
-├── docs/              # Documentation (environnement, Docker, …)
+├── docs/              # Documentation (Docker, Postman, déploiement, …)
+│   └── postman/       # Collection Postman importable
 ├── docker-compose.yml # MySQL, MongoDB, backend
 └── README.md
 ```
@@ -55,6 +56,9 @@ TaskChef/
 | Document | Contenu |
 |----------|---------|
 | [docs/environnement-et-docker.md](docs/environnement-et-docker.md) | Installation, Docker Compose, variables, URLs, commandes, dépannage |
+| [docs/tests-postman.md](docs/tests-postman.md) | Pas à pas tests API avec Postman |
+| [docs/postman/TaskChef.postman_collection.json](docs/postman/TaskChef.postman_collection.json) | Collection Postman (import) |
+| [docs/deploiement-alwaysdata.md](docs/deploiement-alwaysdata.md) | Déploiement type Alwaysdata (SFTP, Node, CORS, Mongo Atlas) |
 
 ## Auteur
 

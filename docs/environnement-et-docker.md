@@ -194,3 +194,10 @@ Les valeurs par défaut du code pointent vers `localhost` pour MySQL et MongoDB 
 | `frontend/app.js` | URL de l’API (`API_URL`, par défaut `http://localhost:3000`). |
 
 Pour toute évolution de ce document, gardez-le aligné avec les versions réelles des images et des ports du dépôt.
+
+---
+
+## 10. Poursuivre après l’installation
+
+- **Tests API (Postman)** : [tests-postman.md](tests-postman.md) et collection [postman/TaskChef.postman_collection.json](postman/TaskChef.postman_collection.json).
+- **Déploiement distant (type Alwaysdata)** : [deploiement-alwaysdata.md](deploiement-alwaysdata.md).
