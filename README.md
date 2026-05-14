@@ -1,57 +1,61 @@
 # TaskChef
 
-Application web de gestion de tâches réalisée dans le cadre (...) 
+Application web de gestion de tâches réalisée dans le cadre d’un projet de formation (ECF).
 
 ## Objectif
 
-Permettre à un utilisateur de créer, modifier, supprimer et suivre ses tâches quotidiennes à travers une interface simple, responsive et sécurisée.
+Permettre à un utilisateur de créer, modifier, supprimer et suivre ses tâches à travers une interface **HTML / CSS / JavaScript** responsive, une **API REST** sous **Node.js / Express**, une base **MySQL** (données métier), une base **MongoDB** (logs d’activité), et une exécution **Docker Compose** pour l’environnement de développement.
 
-## Fonctionnalités prévues
+## Fonctionnalités principales
 
-- Création de tâches
-- Modification de tâches
-- Suppression de tâches
-- Liste des tâches
-- Filtre par statut
-- Gestion des priorités
-- Responsive desktop / mobile
-- API REST
-- Base SQL (MySQL)
-- Logs NoSQL (MongoDB)
+- Authentification (JWT), rôles utilisateur
+- CRUD tâches (MySQL), filtre par statut
+- Journalisation d’activité (MongoDB)
+- Interface responsive (grille, navigation)
 
-## Technologies utilisées
+## Technologies
 
-### Front-end
-- HTML5
-- CSS3
-- JavaScript
+| Couche | Stack |
+|--------|--------|
+| Front | HTML5, CSS3, JavaScript (`fetch`), Bootstrap 5 |
+| Back | Node.js 20, Express 5 |
+| Données | MySQL 8, MongoDB 7 |
+| Outils | Git, Docker, Docker Compose |
 
-### Back-end
-- Node.js
-- Express.js
+## Démarrage rapide avec Docker
 
-### Base de données
-- MySQL
-- MongoDB
+La procédure complète (prérequis, variables d’environnement, CORS, import SQL, dépannage) est décrite ici :
 
-### Outils
-- Git / GitHub
-- Docker
-- Visual Studio Code
+**[docs/environnement-et-docker.md](docs/environnement-et-docker.md)**
 
-## Installation
+En résumé, à la racine du projet :
+
 ```bash
-git clone <url-du-repo>
+git clone <url-du-depot>
 cd TaskChef
-npm install
-npm run dev
+docker compose up --build
+```
 
-## Structure du projet
-frontend/
-backend/
-database/
-docs/
+Puis importez le schéma et le jeu d’essai SQL (voir la section 3 du document Docker). Ouvrez le front via un petit serveur HTTP et une origine autorisée par CORS (détails dans le même document).
 
+## Structure du dépôt
 
-# Auteur 
+```
+TaskChef/
+├── backend/           # API Express (Dockerfile, server.js)
+├── frontend/          # Pages statiques (HTML, CSS, JS)
+├── database/sql/      # Scripts MySQL (schéma, seed)
+├── docs/              # Documentation (environnement, Docker, …)
+├── docker-compose.yml # MySQL, MongoDB, backend
+└── README.md
+```
+
+## Documentation
+
+| Document | Contenu |
+|----------|---------|
+| [docs/environnement-et-docker.md](docs/environnement-et-docker.md) | Installation, Docker Compose, variables, URLs, commandes, dépannage |
+
+## Auteur
+
 Nosheene MOHAMMAD
