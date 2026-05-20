@@ -59,7 +59,8 @@ TaskChef/
 | [docs/tests-postman.md](docs/tests-postman.md) | Pas à pas tests API avec Postman |
 | [docs/postman/TaskChef.postman_collection.json](docs/postman/TaskChef.postman_collection.json) | Collection Postman (import) |
 | [docs/deploiement-alwaysdata.md](docs/deploiement-alwaysdata.md) | Déploiement type Alwaysdata (SFTP, Node, CORS, Mongo Atlas) |
-| [docs/pas-a-pas-complet-ecf.md](docs/pas-a-pas-complet-ecf.md) | **Guide complet** : env. test, captures dossier, Postman, déploiement |
+| [docs/pas-a-pas-complet.md](docs/pas-a-pas-complet.md) | **Guide complet** : env. test, captures dossier, Postman, déploiement |
+| [docs/phase-4-deploiement-alwaysdata-pas-a-pas.md](docs/phase-4-deploiement-alwaysdata-pas-a-pas.md) | **Phase 4** : déploiement Alwaysdata pas à pas |
 
 ## Auteur
 
