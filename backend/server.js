@@ -177,7 +177,8 @@ app.get("/health", async (_req, res) => {
   return res.status(statusCode).json(health);
 });
 
-app.post("/auth/register", authLimiter, async (req, res) => {
+// Render / certains proxies : slash final parfois requis — les deux chemins sont acceptés
+app.post(["/auth/register", "/auth/register/"], authLimiter, async (req, res) => {
   const { nom, email, mot_de_passe } = req.body;
 
   if (!nom || nom.trim().length < 2) {

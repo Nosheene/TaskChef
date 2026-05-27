@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = "https://taskchef-api.onrender.com";
 
 function getToken() {
   return localStorage.getItem("taskchef_token");
