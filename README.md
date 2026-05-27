@@ -22,6 +22,19 @@ Permettre à un utilisateur de créer, modifier, supprimer et suivre ses tâches
 | Données | MySQL 8, MongoDB 7 |
 | Outils | Git, Docker, Docker Compose |
 
+## Déploiement production (ECF)
+
+| Composant | Hébergeur recommandé |
+|-----------|----------------------|
+| Front statique | **Alwaysdata** |
+| API Node.js | **Render** (gratuit) ou site Node Alwaysdata |
+| MySQL | **Alwaysdata** |
+| MongoDB (historique) | **MongoDB Atlas** (M0) |
+
+Guide détaillé : **[docs/deploiement-alwaysdata-render.md](docs/deploiement-alwaysdata-render.md)**
+
+En local, `frontend/app.js` utilise `http://localhost:3000` ; en production sur Alwaysdata, l’URL Render est choisie automatiquement (sauf `localhost`).
+
 ## Démarrage rapide avec Docker
 
 La procédure complète (prérequis, variables d’environnement, CORS, import SQL, dépannage) est décrite ici :
@@ -58,7 +71,8 @@ TaskChef/
 | [docs/environnement-et-docker.md](docs/environnement-et-docker.md) | Installation, Docker Compose, variables, URLs, commandes, dépannage |
 | [docs/tests-postman.md](docs/tests-postman.md) | Pas à pas tests API avec Postman |
 | [docs/postman/TaskChef.postman_collection.json](docs/postman/TaskChef.postman_collection.json) | Collection Postman (import) |
-| [docs/deploiement-alwaysdata.md](docs/deploiement-alwaysdata.md) | Déploiement type Alwaysdata (SFTP, Node, CORS, Mongo Atlas) |
+| [docs/deploiement-alwaysdata-render.md](docs/deploiement-alwaysdata-render.md) | **Prod recommandée** : Alwaysdata (front + MySQL) + Render (API) |
+| [docs/deploiement-alwaysdata.md](docs/deploiement-alwaysdata.md) | Variante tout Alwaysdata (statique + Node) |
 | [docs/pas-a-pas-complet.md](docs/pas-a-pas-complet.md) | **Guide complet** : env. test, captures dossier, Postman, déploiement |
 | [docs/phase-4-deploiement-alwaysdata-pas-a-pas.md](docs/phase-4-deploiement-alwaysdata-pas-a-pas.md) | **Phase 4** : déploiement Alwaysdata pas à pas |
 

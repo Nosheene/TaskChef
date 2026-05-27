@@ -4,6 +4,8 @@
 
 **Section du dossier ECF :** **II.4 — Documenter le déploiement d'une application dynamique web ou web mobile**
 
+> **Recommandation (2026)** : si vous ne pouvez pas créer un 2ᵉ site Node.js sur Alwaysdata, suivez d’abord **[deploiement-alwaysdata-render.md](deploiement-alwaysdata-render.md)** (front + MySQL sur Alwaysdata, API sur Render). Ce document décrit la variante **tout Alwaysdata** (statique + Node).
+
 ---
 
 ## Avant de commencer — noter ces infos
@@ -17,7 +19,7 @@ Remplis ce tableau au fur et à mesure (dans un carnet, pas dans Git pour les mo
 | URL de l’**API** (site Node.js) | `https://________________.alwaysdata.net` |
 | Hôte MySQL Alwaysdata | `mysql-xxx.alwaysdata.net` |
 | Port MySQL | souvent `3306` |
-| Nom de la base | `taskchef` (ou celui créé dans l’admin) |
+| Nom de la base | ex. `taskchef_bd` (nom **exact** listé par `SHOW DATABASES;`) |
 | Utilisateur MySQL | |
 | Mot de passe MySQL | |
 | `JWT_SECRET` (long, aléatoire, nouveau) | |
@@ -27,27 +29,16 @@ Remplis ce tableau au fur et à mesure (dans un carnet, pas dans Git pour les mo
 
 ## Étape 0 — Préparer les fichiers sur ton Mac
 
-### 0.1 Copie de travail pour la prod (recommandé)
+### 0.1 `API_URL` pour la production
 
-Ne modifie pas ton `app.js` local si tu veux garder `localhost:3000` pour Docker.
+Le fichier `frontend/app.js` utilise déjà une détection automatique :
 
-**Option A — une seule ligne à changer avant upload :**
+- **localhost** → `http://localhost:3000` (Docker / dev)
+- **sinon** → URL Render de production (à adapter si votre service Render a un autre nom)
 
-Dans `~/TaskChef/frontend/app.js`, remplace temporairement :
+Si l’API est hébergée sur **Alwaysdata** (site Node), modifiez la branche « production » dans `app.js` avec l’URL HTTPS du site Node.
 
-```javascript
-const API_URL = "http://localhost:3000";
-```
-
-par (avec **ton** URL API HTTPS) :
-
-```javascript
-const API_URL = "https://TON-API.alwaysdata.net";
-```
-
-*(Remets `localhost` après les tests locaux si tu préfères.)*
-
-**Option B — deux dossiers :** garde `frontend/` pour le local ; copie `frontend/` vers `frontend-prod/` avec la bonne `API_URL`.
+Re-uploadez **`app.js`** sur le serveur après toute modification.
 
 ### 0.2 Liste des fichiers à envoyer
 
@@ -203,11 +194,7 @@ Si `down` : vérifier variables MySQL / `MONGO_URI`, logs du site dans l’admin
 
 ### 4.2 Vérifier `API_URL` dans `app.js`
 
-Avant upload, `app.js` doit pointer vers l’URL de l’**étape 3.6** :
-
-```javascript
-const API_URL = "https://TON-API.alwaysdata.net";
-```
+Avant upload, vérifiez que la branche production de `app.js` pointe vers l’URL de l’**étape 3.6** (Alwaysdata Node **ou** Render — voir [deploiement-alwaysdata-render.md](deploiement-alwaysdata-render.md)).
 
 ### 4.3 Upload FTP/SFTP
 

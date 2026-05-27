@@ -1,99 +1,109 @@
-# Déploiement TaskChef — approche type Alwaysdata
+# Déploiement TaskChef — Alwaysdata
 
-Ce document décrit une **démarche type** hébergement mutualisé (ex. **Alwaysdata**) : front statique par **FTP/SFTP**, API **Node.js** configurée dans le panneau, bases **MySQL** (+ **MongoDB** souvent externe, ex. **Atlas**). Adaptez les noms d’hôtes et menus à **votre** interface Alwaysdata et à **votre** offre.
+## Quelle doc suivre ?
 
-> **Important** : en production, ne réutilisez pas les mots de passe ou `JWT_SECRET` du `docker-compose.yml` de développement.
+| Situation | Document |
+|-----------|----------|
+| **Recommandé** — front + MySQL sur Alwaysdata, API sur **Render** (gratuit) | **[deploiement-alwaysdata-render.md](deploiement-alwaysdata-render.md)** |
+| Tout sur Alwaysdata (site statique **et** site Node.js sur le même compte) | Ce fichier + [phase-4-deploiement-alwaysdata-pas-a-pas.md](phase-4-deploiement-alwaysdata-pas-a-pas.md) |
 
----
-
-## 1. Vue d’ensemble
-
-| Composant | Où l’héberger ? | Mode de transfert / config typique |
-|-----------|-----------------|-------------------------------------|
-| **Frontend** (`frontend/`) | Site **statique** (ou équivalent) | **SFTP/FTP** vers le répertoire web public |
-| **Backend** (`backend/`) | Site **Node.js** | Fichiers par **SFTP** + commande de démarrage dans l’admin (ex. `npm start` ou `node server.js`) + `npm install` en **SSH** |
-| **MySQL** | Base fournie par l’hébergeur | Paramètres dans l’admin (hôte, port, utilisateur, base) |
-| **MongoDB** | Souvent **externe** (MongoDB Atlas gratuit possible) | Variable `MONGO_URI` sur le site Node |
-
-Le **Docker Compose** du dépôt sert surtout au **développement local** ; en mutualisé classique on ne lance généralement **pas** `docker compose` sur les serveurs Alwaysdata.
+> En production, ne réutilisez pas les secrets du `docker-compose.yml` local.
 
 ---
 
-## 2. Front-end (SFTP / FTP)
+## 1. Vue d’ensemble (tout Alwaysdata)
 
-1. Créez un site **statique** (ou le type proposé pour fichiers HTML/CSS/JS).
-2. Avec **FileZilla**, **Cyberduck** ou le client SFTP intégré, uploadez le contenu de **`frontend/`** (fichiers à la racine du site : `index.html`, `login.html`, `styles.css`, `app.js`, dossier **`assets/`**, etc.).
-3. **URL du front** : notez l’URL HTTPS (ex. `https://votrecompte.alwaysdata.net/`).
+| Composant | Où ? | Transfert / config |
+|-----------|------|---------------------|
+| **Frontend** | Site **statique** | SFTP → répertoire `www` |
+| **Backend** | Site **Node.js** | SFTP → `backend/` + SSH `npm install` |
+| **MySQL** | Alwaysdata | Import `database/sql/schema.sql` |
+| **MongoDB** | **Atlas** (souvent) | `MONGO_URI` sur le site Node |
 
-### Modifier l’URL de l’API
+Le **Docker Compose** du dépôt sert au **développement local** uniquement.
 
-Dans **`frontend/app.js`**, la constante **`API_URL`** pointe par défaut vers `http://localhost:3000`.
+---
 
-- Remplacez-la par l’URL **HTTPS** de votre API en production, par exemple :  
-  `const API_URL = "https://api-votrecompte.alwaysdata.net";`  
-  (exemple indicatif : adaptez au sous-domaine / chemin réels.)
+## 2. Front-end (SFTP)
 
-4. Re-uploadez **`app.js`** après modification.
+1. Créer un site **statique** → adresse `votrecompte.alwaysdata.net` (pas le domaine `alwaysdata.net` seul).
+2. Répertoire : **`www`** — y placer **directement** `index.html`, `login.html`, `app.js`, `styles.css`, `assets/`, etc.
+3. **Directives Apache** du virtual host : **laisser vide**.
+
+### `API_URL`
+
+En production hybride (Render), `frontend/app.js` bascule automatiquement :
+
+- `localhost` / `127.0.0.1` → `http://localhost:3000`
+- sinon → URL Render (à adapter dans le fichier si besoin)
+
+Si l’API est sur Alwaysdata, définissez l’URL HTTPS du site Node dans la branche « production » du fichier.
+
+Re-uploadez **`app.js`** après toute modification.
 
 ---
 
 ## 3. Back-end Node.js (Alwaysdata)
 
-1. Créez un site de type **Node.js** dans l’administration.
-2. Uploadez le dossier **`backend/`** (sans `node_modules` : plus léger ; installez les deps en SSH).
-3. En **SSH** (accès fourni par Alwaysdata), dans le répertoire de l’app :
+1. **Web → Sites → Ajouter** → type **Node.js**.
+2. Répertoire : `backend` — commande : `npm start`.
+3. SFTP : envoyer `backend/` (sans `node_modules`).
+4. SSH :
 
-   ```bash
-   npm install --omit=dev
-   ```
+```bash
+ssh VOTRE_LOGIN@ssh-VOTRE_COMPTE.alwaysdata.net
+cd ~/backend
+npm install --omit=dev
+```
 
-4. Définissez la **commande de démarrage** attendue par l’hébergeur (souvent `npm start` ou `node server.js` — voir [aide Node.js Alwaysdata](https://help.alwaysdata.com/fr/hebergement-web/langages/nodejs/)).
-5. Configurez les **variables d’environnement** du site Node (équivalent de votre `docker-compose`) :
-   - `PORT` — souvent imposé ou ignoré selon l’hébergeur ; suivez la doc Alwaysdata.
-   - `NODE_ENV=production`
-   - `JWT_SECRET` — chaîne longue et aléatoire.
-   - `CORS_ORIGIN` — **origine exacte du front**, ex. `https://votrecompte.alwaysdata.net` (sans slash final si l’API est stricte ; testez les deux).
-   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` — valeurs **MySQL Alwaysdata**.
-   - `MONGO_URI` — URI **Atlas** ou Mongo fourni par l’hébergeur si disponible.
+5. Variables d’environnement :
 
-6. **Importer le schéma** `database/sql/schema.sql` dans la base MySQL Alwaysdata (phpMyAdmin, client MySQL, ou script).
+| Variable | Exemple |
+|----------|---------|
+| `NODE_ENV` | `production` |
+| `JWT_SECRET` | chaîne longue aléatoire |
+| `CORS_ORIGIN` | `https://votrecompte.alwaysdata.net` |
+| `MYSQL_HOST` | `mysql-votrecompte.alwaysdata.net` |
+| `MYSQL_PORT` | `3306` |
+| `MYSQL_USER` | utilisateur MySQL |
+| `MYSQL_PASSWORD` | mot de passe |
+| `MYSQL_DATABASE` | nom **exact** de la base (ex. `taskchef_bd`) |
+| `MONGO_URI` | chaîne Atlas |
+
+6. Importer `database/sql/schema.sql` (phpMyAdmin ou client MySQL).
+
+7. Test : `curl -s https://URL-DU-SITE-NODE.alwaysdata.net/health`
 
 ---
 
 ## 4. CORS et HTTPS
 
-- En **production**, `server.js` n’accepte les origines croisées que si elles figurent dans **`CORS_ORIGIN`** (et selon la logique `NODE_ENV`).
-- Le **front** et l’**API** doivent être en **HTTPS** en production pour éviter les blocages navigateur (contenu mixte).
-
-Testez depuis le navigateur : onglet **Network** sur une action login / liste des tâches ; en cas d’erreur CORS, vérifiez l’URL exacte du `Origin` et ajoutez-la à `CORS_ORIGIN`.
-
----
-
-## 5. MongoDB (Atlas — exemple)
-
-1. Créez un cluster gratuit sur [MongoDB Atlas](https://www.mongodb.com/atlas).
-2. Autorisez l’**IP sortante** du serveur Alwaysdata (ou `0.0.0.0/0` temporairement pour test — moins sécurisé).
-3. Copiez la **chaîne de connexion** (avec utilisateur et mot de passe) dans **`MONGO_URI`**.
+- En `production`, seules les origines de **`CORS_ORIGIN`** sont acceptées.
+- Front et API en **HTTPS**.
+- En cas d’erreur CORS : F12 → onglet Network → comparer l’`Origin` avec `CORS_ORIGIN` (sans slash final).
 
 ---
 
-## 6. Checklist avant de dire « en ligne »
+## 5. MongoDB Atlas
 
-- [ ] Schéma SQL appliqué sur MySQL de production.
-- [ ] `JWT_SECRET` et mots de passe forts.
-- [ ] `CORS_ORIGIN` = URL du front.
-- [ ] `API_URL` dans `app.js` = URL de l’API HTTPS.
-- [ ] Connexion MongoDB OK (`/health` ou création de tâche qui écrit un log).
-- [ ] Test manuel : inscription, login, CRUD tâche, logs.
+1. Cluster gratuit M0.
+2. Utilisateur + **Network Access** (IP du serveur ou `0.0.0.0/0` pour test).
+3. Chaîne `mongodb+srv://...` dans **`MONGO_URI`**.
 
 ---
 
-## 7. Pour le dossier projet (ECF)
+## 6. Checklist « en ligne »
 
-Documentez en **captures** :
+- [ ] Tables `users` / `tasks` présentes
+- [ ] `/health` → `mysql` et `mongo` **ok**
+- [ ] `CORS_ORIGIN` = URL du front
+- [ ] `app.js` pointe vers la bonne API
+- [ ] Inscription, login, CRUD tâches, historique
 
-1. Écran d’administration Alwaysdata (site Node + variables d’environnement — **masquez** les secrets).
-2. Client SFTP montrant les fichiers du front uploadés.
-3. Navigateur sur l’URL de production + une requête **Network** réussie vers l’API.
+---
 
-Mentionnez explicitement que le **déploiement local** utilise Docker (voir `environnement-et-docker.md`) et que le **déploiement distant** utilise l’hébergeur + SFTP + configuration Node.
+## 7. Dossier ECF (II.4)
+
+Captures : admin Alwaysdata (secrets floutés), SFTP du front, navigateur + Network, réponse `/health`.
+
+Préciser : **local** = Docker Compose ; **distant** = Alwaysdata (+ Render pour l’API si pas de site Node).

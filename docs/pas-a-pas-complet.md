@@ -209,36 +209,26 @@ Refais **POST /auth/login**, puis **DELETE /tasks/:id**.
 
 # PHASE 4 — Déploiement (après Postman OK)
 
-**Prérequis :** tests Postman concluants en local ; compte **Alwaysdata** (ou hébergeur équivalent) ; éventuellement **MongoDB Atlas** pour Mongo en production.
+**Prérequis :** tests Postman concluants en local ; compte **Alwaysdata** ; **MongoDB Atlas** ; compte **Render** (gratuit) pour l’API si pas de site Node sur Alwaysdata.
 
-Le déploiement **ne reprend pas Docker** sur l’hébergeur mutualisé : on transfère les fichiers et on configure Node + MySQL (+ Mongo externe).
+Le déploiement **ne reprend pas Docker** en production.
 
-## 4.1 Vue d’ensemble
+**Guide détaillé recommandé :** [deploiement-alwaysdata-render.md](deploiement-alwaysdata-render.md)
+
+## 4.1 Vue d’ensemble (Alwaysdata + Render)
 
 | Composant | Action |
 |-----------|--------|
-| **Front** | SFTP/FTP → upload contenu de `frontend/` |
-| **Back** | Site Node.js Alwaysdata + SSH `npm install` |
-| **MySQL** | Base Alwaysdata + import `schema.sql` |
-| **MongoDB** | Souvent **MongoDB Atlas** → `MONGO_URI` sur le site Node |
+| **Front** | Site statique Alwaysdata → SFTP → `www/` |
+| **Back** | **Render** Web Service (`backend/`) **ou** site Node Alwaysdata |
+| **MySQL** | Alwaysdata + import `schema.sql` (base ex. `taskchef_bd`) |
+| **MongoDB** | Atlas → `MONGO_URI` sur Render / site Node |
 
 ## 4.2 Préparer les fichiers avant upload
 
-### Front — modifier l’URL de l’API
+### Front — `API_URL`
 
-Dans `frontend/app.js`, remplace :
-
-```javascript
-const API_URL = "http://localhost:3000";
-```
-
-par l’URL **HTTPS** de ton API en production, par exemple :
-
-```javascript
-const API_URL = "https://api-toncompte.alwaysdata.net";
-```
-
-(Adapter à l’URL réelle fournie par Alwaysdata.)
+`frontend/app.js` bascule automatiquement entre `localhost:3000` (dev) et l’URL Render en production. Adaptez l’URL Render dans le fichier si besoin, puis uploadez `app.js` sur Alwaysdata.
 
 ### Back — secrets production
 
@@ -265,22 +255,17 @@ Préparer (sur papier / gestionnaire, pas dans Git) :
 3. Autoriser l’IP du serveur Alwaysdata (ou IP temporaire pour test).
 4. Copier la chaîne de connexion → `MONGO_URI`.
 
-### Étape C — Site Node.js (backend)
+### Étape C — API (Render ou Alwaysdata Node)
+
+**Option Render (recommandée)** : voir [deploiement-alwaysdata-render.md](deploiement-alwaysdata-render.md) — déploiement GitHub, variables MySQL Alwaysdata + `MONGO_URI` + `CORS_ORIGIN`.
+
+**Option Alwaysdata Node** :
 
 1. Créer un site **Node.js** dans l’admin.
-2. SFTP : uploader le dossier **`backend/`** (sans `node_modules`).
-3. SSH dans le répertoire de l’app :
-   ```bash
-   npm install --omit=dev
-   ```
-4. Commande de démarrage : `npm start` ou `node server.js` (selon doc Alwaysdata).
-5. Variables d’environnement du site :
-   - `NODE_ENV=production`
-   - `JWT_SECRET=...`
-   - `CORS_ORIGIN=https://ton-front.alwaysdata.net`
-   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
-   - `MONGO_URI=...`
-6. Tester : `curl -s https://api-toncompte.alwaysdata.net/health`
+2. SFTP : uploader **`backend/`** (sans `node_modules`).
+3. SSH : `npm install --omit=dev`
+4. Variables : `JWT_SECRET`, `CORS_ORIGIN`, `MYSQL_*`, `MONGO_URI`
+5. Tester : `curl -s https://api-toncompte.alwaysdata.net/health`
 
 ### Étape D — Site statique (front)
 
