@@ -1,4 +1,7 @@
-const API_URL = "https://taskchef-api.onrender.com";
+const API_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:3000"
+    : "https://taskchef-api.onrender.com";
 
 function getToken() {
   return localStorage.getItem("taskchef_token");
@@ -32,7 +35,9 @@ async function apiFetch(path, options = {}) {
   const data = contentType.includes("application/json") ? await response.json() : null;
 
   if (!response.ok) {
-    throw new Error(data?.message || "Erreur API");
+    const fallback =
+      response.status === 404 ? "Service introuvable (vérifiez API_URL)." : `Erreur API (${response.status}).`;
+    throw new Error(data?.message || fallback);
   }
 
   return data;
@@ -67,7 +72,7 @@ async function initRegister() {
     event.preventDefault();
 
     try {
-      await apiFetch("/auth/register", {
+      await apiFetch("/auth/register/", {
         method: "POST",
         body: JSON.stringify({
           nom: document.getElementById("name").value,
