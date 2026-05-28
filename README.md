@@ -1,6 +1,6 @@
 # TaskChef
 
-Application web de gestion de tâches réalisée dans le cadre d’un projet de formation (ECF — DWWM1).
+Application web de gestion de tâches réalisée dans le cadre d’un projet de formation.
 
 ## Objectif
 
