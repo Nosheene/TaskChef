@@ -1,47 +1,43 @@
 # TaskChef
 
-Application web de gestion de tâches réalisée dans le cadre d’un projet de formation (ECF).
+Application web de gestion de tâches réalisée dans le cadre d’un projet de formation (ECF — DWWM1).
 
 ## Objectif
 
-Permettre à un utilisateur de créer, modifier, supprimer et suivre ses tâches à travers une interface **HTML / CSS / JavaScript** responsive, une **API REST** sous **Node.js / Express**, une base **MySQL** (données métier), une base **MongoDB** (logs d’activité), et une exécution **Docker Compose** pour l’environnement de développement.
+Permettre à un utilisateur de créer, modifier, supprimer et suivre ses tâches via une interface **HTML / CSS / JavaScript** responsive, une **API REST** **Node.js / Express**, une base **MySQL** (utilisateurs et tâches), une base **MongoDB** (historique des actions), et un environnement de développement reproductible avec **Docker Compose**.
 
 ## Fonctionnalités principales
 
-- Authentification (JWT), rôles utilisateur
-- CRUD tâches (MySQL), filtre par statut
-- Journalisation d’activité (MongoDB)
-- Interface responsive (grille, navigation)
+- Authentification JWT (inscription, connexion, rôles `user` / `admin`)
+- CRUD tâches en MySQL, filtre par statut sur le tableau de bord
+- Historique des actions (MongoDB), affiché sur le dashboard
+- Interface responsive (desktop et web mobile)
+- API documentée et testable (Postman)
 
 ## Technologies
 
 | Couche | Stack |
 |--------|--------|
 | Front | HTML5, CSS3, JavaScript (`fetch`), Bootstrap 5 |
-| Back | Node.js 20, Express 5 |
-| Données | MySQL 8, MongoDB 7 |
+| Back | Node.js 20, Express 5, bcrypt, JWT |
+| Données | MySQL 8, MongoDB 7 (Mongoose) |
 | Outils | Git, Docker, Docker Compose |
 
-## Déploiement production (ECF)
+## Pages du front
 
-| Composant | Hébergeur recommandé |
-|-----------|----------------------|
-| Front statique | **Alwaysdata** |
-| API Node.js | **Render** (gratuit) ou site Node Alwaysdata |
-| MySQL | **Alwaysdata** |
-| MongoDB (historique) | **MongoDB Atlas** (M0) |
+| Fichier | Description |
+|---------|-------------|
+| `login.html` | Connexion |
+| `register.html` | Inscription |
+| `index.html` | Tableau de bord + historique |
+| `create-task.html` | Nouvelle tâche |
+| `task-detail.html` | Détail / modification / suppression (admin) |
 
-Guide détaillé : **[docs/deploiement-alwaysdata-render.md](docs/deploiement-alwaysdata-render.md)**
+Logique client centralisée dans **`frontend/app.js`**.
 
-En local, `frontend/app.js` utilise `http://localhost:3000` ; en production sur Alwaysdata, l’URL Render est choisie automatiquement (sauf `localhost`).
+## Démarrage rapide (local)
 
-## Démarrage rapide avec Docker
-
-La procédure complète (prérequis, variables d’environnement, CORS, import SQL, dépannage) est décrite ici :
-
-**[docs/environnement-et-docker.md](docs/environnement-et-docker.md)**
-
-En résumé, à la racine du projet :
+Documentation complète : **[docs/environnement-et-docker.md](docs/environnement-et-docker.md)**
 
 ```bash
 git clone <url-du-depot>
@@ -49,32 +45,88 @@ cd TaskChef
 docker compose up --build
 ```
 
-Puis importez le schéma et le jeu d’essai SQL (voir la section 3 du document Docker). Ouvrez le front via un petit serveur HTTP et une origine autorisée par CORS (détails dans le même document).
+Importer le schéma SQL :
+
+```bash
+docker compose exec -T mysql mysql -utaskchef_user -ptaskchef_pass taskchef < database/sql/schema.sql
+```
+
+Lancer le front (autre terminal) :
+
+```bash
+cd frontend && python3 -m http.server 5500
+```
+
+- Front : http://localhost:5500/login.html  
+- API : http://localhost:3000/health  
+
+`frontend/app.js` utilise automatiquement `http://localhost:3000` en local.
+
+## Déploiement production
+
+Architecture utilisée pour la mise en ligne :
+
+| Composant | Hébergeur | Exemple d’URL |
+|-----------|-----------|----------------|
+| Front statique | **Alwaysdata** | `https://taskchef.alwaysdata.net` |
+| API Node.js | **Render** (plan gratuit) | `https://taskchef-api.onrender.com` |
+| MySQL | **Alwaysdata** | base `taskchef_bd` |
+| MongoDB | **MongoDB Atlas** M0 | variable `MONGO_URI` |
+
+Guide pas à pas : **[docs/deploiement-alwaysdata-render.md](docs/deploiement-alwaysdata-render.md)**
+
+Variante « tout sur Alwaysdata » (statique + Node) : **[docs/deploiement-alwaysdata.md](docs/deploiement-alwaysdata.md)**
+
+En production, `app.js` pointe vers l’API Render lorsque le site n’est pas servi depuis `localhost`.
+
+Variables API Render (extrait) : `MYSQL_*` (Alwaysdata), `MONGO_URI`, `JWT_SECRET`, `CORS_ORIGIN=https://taskchef.alwaysdata.net`.
+
+Test :
+
+```bash
+curl -s https://taskchef-api.onrender.com/health
+```
 
 ## Structure du dépôt
 
 ```
 TaskChef/
-├── backend/           # API Express (Dockerfile, server.js)
-├── frontend/          # Pages statiques (HTML, CSS, JS)
-├── database/sql/      # Scripts MySQL (schéma, seed)
-├── docs/              # Documentation (Docker, Postman, déploiement, …)
-│   └── postman/       # Collection Postman importable
-├── docker-compose.yml # MySQL, MongoDB, backend
+├── backend/              # API Express (server.js, package.json)
+├── frontend/             # Pages HTML, styles.css, app.js, assets/
+├── database/sql/         # schema.sql, seed.sql
+├── docs/                 # Guides Docker, Postman, déploiement
+│   └── postman/          # Collection Postman
+├── docker-compose.yml
 └── README.md
 ```
+
+## Routes API principales
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| GET | `/health` | État API, MySQL, MongoDB |
+| POST | `/auth/register` | Inscription |
+| POST | `/auth/login` | Connexion (JWT) |
+| GET | `/tasks` | Liste des tâches |
+| GET | `/tasks/:id` | Détail d’une tâche |
+| POST | `/tasks` | Création (JWT) |
+| PUT | `/tasks/:id` | Modification (JWT) |
+| DELETE | `/tasks/:id` | Suppression (JWT, admin) |
+| GET | `/activity-logs` | Historique (JWT) |
 
 ## Documentation
 
 | Document | Contenu |
 |----------|---------|
-| [docs/environnement-et-docker.md](docs/environnement-et-docker.md) | Installation, Docker Compose, variables, URLs, commandes, dépannage |
-| [docs/tests-postman.md](docs/tests-postman.md) | Pas à pas tests API avec Postman |
-| [docs/postman/TaskChef.postman_collection.json](docs/postman/TaskChef.postman_collection.json) | Collection Postman (import) |
-| [docs/deploiement-alwaysdata-render.md](docs/deploiement-alwaysdata-render.md) | **Prod recommandée** : Alwaysdata (front + MySQL) + Render (API) |
-| [docs/deploiement-alwaysdata.md](docs/deploiement-alwaysdata.md) | Variante tout Alwaysdata (statique + Node) |
-| [docs/pas-a-pas-complet.md](docs/pas-a-pas-complet.md) | **Guide complet** : env. test, captures dossier, Postman, déploiement |
-| [docs/phase-4-deploiement-alwaysdata-pas-a-pas.md](docs/phase-4-deploiement-alwaysdata-pas-a-pas.md) | **Phase 4** : déploiement Alwaysdata pas à pas |
+| [docs/environnement-et-docker.md](docs/environnement-et-docker.md) | Docker, variables, CORS, dépannage local |
+| [docs/tests-postman.md](docs/tests-postman.md) | Tests API avec Postman |
+| [docs/postman/TaskChef.postman_collection.json](docs/postman/TaskChef.postman_collection.json) | Collection importable |
+| [docs/deploiement-alwaysdata-render.md](docs/deploiement-alwaysdata-render.md) | **Prod** : Alwaysdata + Render + Atlas |
+| [docs/deploiement-alwaysdata.md](docs/deploiement-alwaysdata.md) | Variante tout Alwaysdata |
+| [docs/pas-a-pas-complet.md](docs/pas-a-pas-complet.md) | Guide ECF complet (phases 1 à 4) |
+| [docs/phase-4-deploiement-alwaysdata-pas-a-pas.md](docs/phase-4-deploiement-alwaysdata-pas-a-pas.md) | Phase 4 détaillée |
+
+> Modèle d’infos prod (local, non versionné) : `docs/alwaysdata-infos-prod.txt` (dans `.gitignore`).
 
 ## Auteur
 
