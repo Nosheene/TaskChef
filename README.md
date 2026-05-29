@@ -1,6 +1,6 @@
 # TaskChef
 
-Application web de gestion de tâches réalisée dans le cadre d’un projet de formation.
+Application web de gestion de tâches réalisée dans le cadre d’un projet.
 
 ## Objectif
 
