@@ -83,76 +83,12 @@ L’API reste sur **http://localhost:3000** (configurée dans `frontend/app.js`)
 
 ---
 
-# PHASE 2 — Captures pour le dossier projet (navigateur + code)
 
-Objectif : illustrer les **3 piliers** (code + explication + rendu) et les compétences front / fetch / responsive.
-
-## 2.1 Checklist des captures à faire
-
-Coche au fur et à mesure. Nomme les fichiers clairement (ex. `capture-01-health.png`).
-
-### Environnement / Docker
-
-| # | Capture | Où / quoi montrer |
-|---|---------|-------------------|
-| D1 | Terminal | `docker compose ps` — 3 services Up |
-| D2 | Terminal | `curl http://localhost:3000/health` — JSON ok |
-| D3 | VS Code | Arborescence `TaskChef/` (frontend, backend, database, docs) |
-| D4 | VS Code ou terminal | Extrait `docker-compose.yml` (services mysql, mongo, backend) |
-
-### Code (extraits courts + capture IDE)
-
-| # | Fichier | Ce que ça prouve |
-|---|---------|------------------|
-| C1 | `frontend/app.js` | `API_URL`, fonction `apiFetch` + `fetch` |
-| C2 | `frontend/app.js` | `localStorage` + token après login |
-| C3 | `backend/server.js` | Route CRUD ou requête `execute` avec `?` (anti-injection SQL) |
-| C4 | `backend/server.js` | Schéma `ActivityLog` / route `/activity-logs` (NoSQL) |
-| C5 | `database/sql/schema.sql` | Tables `users` et `tasks` |
-
-### Rendu final (navigateur)
-
-| # | Page | Ce que ça prouve |
-|---|------|------------------|
-| R1 | login.html | Page connexion + logo |
-| R2 | index.html (connecté) | Dashboard + cartes tâches |
-| R3 | create-task.html | Formulaire création |
-| R4 | task-detail.html | Détail centré + modification |
-| R5 | index.html (bas de page) | Bloc **Logs d’activité NoSQL** |
-| R6 | index.html responsive | Même page en **fenêtre étroite** (1 colonne) — preuve responsive |
-
-### Réseau (preuve JavaScript asynchrone)
-
-| # | Action | Onglet Network |
-|---|--------|----------------|
-| N1 | Connexion sur login.html | Requête **POST** `auth/login` — Status **200**, réponse avec `token` |
-| N2 | Dashboard chargé | **GET** `tasks` — Status **200**, JSON tableau |
-| N3 | Création tâche | **POST** `tasks` — Header **Authorization: Bearer …** |
-| N4 | (optionnel) | **GET** `activity-logs` avec Bearer |
-
-**Comment capturer Network :** F12 → **Réseau / Network** → refaire l’action → clic sur la ligne de requête → capture de l’en-tête + réponse.
-
-## 2.2 Parcours utilisateur à suivre pour les captures R et N
-
-1. Ouvre http://localhost:5500/register.html → crée un compte (email + mot de passe **8 caractères min**).
-2. Connecte-toi sur login.html → redirection dashboard.
-3. **Capture R2** + **N2** (liste des tâches).
-4. Crée une tâche → **R3**, **N3**.
-5. Clique une carte → détail → **R4**.
-6. Descends jusqu’aux logs → **R5**.
-7. Réduis la largeur du navigateur → **R6**.
-
-## 2.3 Texte court à coller dans le dossier (exemple)
-
-> L’environnement de test repose sur Docker Compose (MySQL, MongoDB, API Node.js) et un serveur HTTP local pour le front (port 5500). Les échanges front/API utilisent `fetch` de manière asynchrone ; l’authentification repose sur un JWT stocké dans `localStorage`.
-
----
-
-# PHASE 3 — Tests Postman (API)
+# PHASE 2 — Tests Postman (API)
 
 À faire **après** la phase 1 (Docker + health OK).
 
-## 3.1 Importer la collection
+## 2.1 Importer la collection
 
 1. Postman → **Import** → `~/TaskChef/docs/postman/TaskChef.postman_collection.json`
 2. Collection **TaskChef API** → **Variables** :
@@ -160,7 +96,7 @@ Coche au fur et à mesure. Nomme les fichiers clairement (ex. `capture-01-health
    - `token` = (vide au départ)
    - `task_id` = `1` (mis à jour après création)
 
-## 3.2 Ordre des requêtes (dossiers 01 → 03)
+## 2.2 Ordre des requêtes
 
 | Étape | Requête | Statut attendu | Note |
 |-------|---------|----------------|------|
@@ -174,7 +110,7 @@ Coche au fur et à mesure. Nomme les fichiers clairement (ex. `capture-01-health
 | 8 | **03** → GET /activity-logs | 200, logs JSON | Capture dossier Postman #4 |
 | 9 | **03** → DELETE /tasks/:id | 200 si **admin**, sinon 403 | Voir 3.3 |
 
-## 3.3 Rendre ton compte admin (pour DELETE)
+## 2.3 Rendre ton compte admin (pour DELETE)
 
 Après Register/Login avec `postman.test@taskchef.local` (ou ton email) :
 
@@ -187,27 +123,8 @@ docker compose exec mysql mysql -utaskchef_user -ptaskchef_pass taskchef -e "UPD
 
 Refais **POST /auth/login**, puis **DELETE /tasks/:id**.
 
-## 3.4 Captures Postman pour le dossier
 
-| # | Requête | Montrer sur la capture |
-|---|---------|------------------------|
-| P1 | GET /health | Status 200 + body JSON |
-| P2 | POST /auth/login | Status 200 + champ `token` (flouter une partie du JWT) |
-| P3 | POST /tasks | Onglet **Headers** : `Authorization: Bearer …` + Status 201 |
-| P4 | GET /activity-logs | Status 200 + tableau de logs |
-
-## 3.5 Si ça échoue
-
-| Erreur | Action |
-|--------|--------|
-| Could not get response | `docker compose ps` ; `base_url` correct ? |
-| 401 | Refaire Login ; vérifier variable `token` |
-| 403 sur DELETE | Passer l’utilisateur en `admin` (3.3) |
-| 429 sur /auth | Attendre quelques minutes (rate limit) |
-
----
-
-# PHASE 4 — Déploiement (après Postman OK)
+# PHASE 3 — Déploiement (après Postman OK)
 
 **Prérequis :** tests Postman concluants en local ; compte **Alwaysdata** ; **MongoDB Atlas** ; compte **Render** (gratuit) pour l’API si pas de site Node sur Alwaysdata.
 
@@ -215,7 +132,7 @@ Le déploiement **ne reprend pas Docker** en production.
 
 **Guide détaillé recommandé :** [deploiement-alwaysdata-render.md](deploiement-alwaysdata-render.md)
 
-## 4.1 Vue d’ensemble (Alwaysdata + Render)
+## 3.1 Vue d’ensemble (Alwaysdata + Render)
 
 | Composant | Action |
 |-----------|--------|
@@ -224,7 +141,7 @@ Le déploiement **ne reprend pas Docker** en production.
 | **MySQL** | Alwaysdata + import `schema.sql` (base ex. `taskchef_bd`) |
 | **MongoDB** | Atlas → `MONGO_URI` sur Render / site Node |
 
-## 4.2 Préparer les fichiers avant upload
+## 3.2 Préparer les fichiers avant upload
 
 ### Front — `API_URL`
 
@@ -240,7 +157,7 @@ Préparer (sur papier / gestionnaire, pas dans Git) :
 - `MONGO_URI` (Atlas)
 - `CORS_ORIGIN` = URL **exacte** du front HTTPS (ex. `https://toncompte.alwaysdata.net`)
 
-## 4.3 Alwaysdata — ordre recommandé
+## 3.3 Alwaysdata — ordre recommandé
 
 ### Étape A — MySQL
 
@@ -281,32 +198,9 @@ Préparer (sur papier / gestionnaire, pas dans Git) :
 - [ ] Logs visibles (si Mongo OK)
 - [ ] Pas d’erreur CORS dans la console (sinon corriger `CORS_ORIGIN`)
 
-## 4.4 Captures déploiement pour le dossier
-
-| # | Capture |
-|---|---------|
-| H1 | Admin Alwaysdata — site Node + variables (secrets floutés) |
-| H2 | Client SFTP — fichiers front uploadés |
-| H3 | Navigateur — URL production + Network (requête API en 200) |
-| H4 | `curl` ou Postman sur `/health` de l’API en production |
-
-## 4.5 Postman en production (optionnel)
+## 3.4 Postman en production (optionnel)
 
 Dans la collection, change la variable **`base_url`** vers l’URL HTTPS de l’API, puis refais **health** → **login** → **tasks** pour prouver que l’API en ligne répond comme en local.
-
----
-
-# Récap — ordre global
-
-```
-PHASE 1  Docker + SQL + front :5500
-    ↓
-PHASE 2  Captures navigateur + code + Network (dossier ECF)
-    ↓
-PHASE 3  Postman (collection + captures P1–P4)
-    ↓
-PHASE 4  Déploiement Alwaysdata (+ captures H1–H4)
-```
 
 ---
 
