@@ -272,7 +272,6 @@ Texte type :
 - [ ] `app.js` : `API_URL` HTTPS
 - [ ] Site statique : upload complet
 - [ ] Login + CRUD + logs OK en navigateur
-- [ ] Captures pour le dossier II.4
 - [ ] Texte procédure dans le Word
 
 ---
